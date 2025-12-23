@@ -7,7 +7,9 @@ const {
 const pino = require("pino");
 const qrcode = require("qrcode-terminal");
 
+const QRCode = require("qrcode");
 let socket; // 🔒 socket global controlado
+let lastQr = null; // 👈 guarda o último QR
 
 async function connectWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState("auth");
@@ -15,6 +17,21 @@ async function connectWhatsApp() {
   const sock = makeWASocket({
     auth: state,
     logger: pino({ level: "silent" }),
+  });
+
+  sock.ev.on("connection.update", async ({ connection, qr }) => {
+    if (qr) {
+      console.log("📱 Novo QR Code gerado");
+
+      // gera base64 (PNG)
+      lastQr = await QRCode.toDataURL(qr);
+    }
+
+    if (connection === "open") {
+      console.log("✅ WhatsApp conectado com sucesso");
+      socket = sock;
+      lastQr = null; // limpa QR após conexão
+    }
   });
 
   sock.ev.on("creds.update", saveCreds);
@@ -61,8 +78,13 @@ async function getGroups() {
   }));
 }
 
+function getLastQr() {
+  return lastQr;
+}
+
 module.exports = {
   connectWhatsApp,
   getSocket,
   getGroups,
+  getLastQr,
 };
