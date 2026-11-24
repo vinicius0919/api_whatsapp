@@ -2,17 +2,19 @@
 const express = require("express");
 const router = express.Router();
 
-const { getLastQr } = require("../src/whatsapp");
+const { getLastQr, getSessionStatus } = require("../src/whatsapp");
 
 router.get("/", (req, res) => {
-  if (!getLastQr()) {
-    return res.json({ status: "connected" });
+  const sessionId = req.auth.sessionId;
+  const qr = getLastQr(sessionId);
+  if (!qr) {
+    return res.json(getSessionStatus(sessionId));
   }
 
   res.send(`
     <html>
       <body style="display:flex;align-items:center;justify-content:center;height:100vh">
-        <img src="${getLastQr()}" />
+        <img alt="WhatsApp QR Code" src="${qr}" />
       </body>
     </html>
   `);

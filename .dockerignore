@@ -1,0 +1,14 @@
+node_modules
+.env
+.env.*
+!.env.example
+auth
+auth-sessions
+.session-locks
+config/api-keys.json
+logs
+*.log
+.git
+.gitignore
+test
+docs

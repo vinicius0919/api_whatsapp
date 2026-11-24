@@ -1,5 +1,9 @@
 *.env
+!.env.example
 /node_modules
-package-lock.json
 cache.json
 /auth
+/auth-*
+/auth-sessions
+/.session-locks
+/config/api-keys.json

@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "id": "admin-local",
+      "role": "admin",
+      "enabled": true,
+      "keyHash": "scrypt$16384$8$1$SALT_HEX$DIGEST_HEX",
+      "applications": ["*"],
+      "sessions": ["default"]
+    }
+  ]
+}

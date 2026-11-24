@@ -1,0 +1,30 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
+const path = require("node:path");
+
+process.env.WEBHOOK_ENCRYPTION_KEY = "test-webhook-encryption-key";
+const { encryptSecret, decryptSecret, signPayload, safeEqual, validateWebhookUrl } = require("../src/webhooks/security");
+
+test("protege segredo de webhook e assina payload", () => {
+  const encrypted = encryptSecret("webhook-secret-value");
+  assert.notEqual(encrypted, "webhook-secret-value");
+  assert.equal(decryptSecret(encrypted), "webhook-secret-value");
+  const signature = signPayload("webhook-secret-value", "{}", "2026-11-23T12:00:00.000Z", "evt_1");
+  assert.equal(safeEqual(signature, signature), true);
+  assert.equal(safeEqual(signature, `${signature}x`), false);
+});
+
+test("bloque destinos de webhook inseguros", async () => {
+  await assert.rejects(() => validateWebhookUrl("http://example.com"), /HTTPS/);
+  await assert.rejects(() => validateWebhookUrl("https://127.0.0.1"), /não permitido/);
+});
+
+test("permite somente o receptor local explicitamente habilitado fora de produção", () => {
+  const cwd = path.resolve(__dirname, "..");
+  const script = "const { validateWebhookUrl } = require('./src/webhooks/security'); validateWebhookUrl('http://127.0.0.1:3004/webhook', { allowLocalTest: true }).then(() => process.stdout.write('ok')).catch((error) => process.stdout.write(error.code));";
+  const enabled = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "test", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_TEST_PORT: "3004" }, encoding: "utf8" });
+  assert.equal(enabled.trim().split("\n").at(-1), "ok");
+  const production = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "production", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_TEST_PORT: "3004" }, encoding: "utf8" });
+  assert.match(production.trim().split("\n").at(-1), /WEBHOOK_HTTPS_REQUIRED|WEBHOOK_DESTINATION_BLOCKED/);
+});
