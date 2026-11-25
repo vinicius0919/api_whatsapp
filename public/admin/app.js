@@ -12,6 +12,13 @@
   const showError = (element, message) => { element.textContent = message; element.hidden = !message; };
   const sessionLabel = (state) => ({ connected: "Conectada", qr_required: "Aguardando QR", connecting: "Conectando", reconnecting: "Reconectando", disconnected: "Desconectada", logged_out: "Desconectada", error: "Erro" }[state] || state || "Indisponível");
   const pillClass = (state) => state === "connected" ? "connected" : ["error"].includes(state) ? "error" : "waiting";
+  const friendlyError = (error) => ({
+    401: "API Key inválida.",
+    403: "Credencial sem autorização administrativa ou Application ID não autorizado.",
+    429: "Muitas tentativas. Aguarde alguns instantes.",
+    500: "Erro interno do Gateway.",
+    503: "Gateway temporariamente indisponível.",
+  }[error.status] || (error.status ? "Não foi possível concluir a operação." : "Não foi possível conectar ao Gateway."));
 
   async function request(url, options = {}) {
     const headers = new Headers(options.headers || {});
@@ -68,8 +75,8 @@
       if (selectedSession) await refreshQr();
       showError($("dashboard-error"), "");
     } catch (error) {
-      if (error.status === 401 || error.status === 403) logout("A API Key não possui acesso administrativo.");
-      else showError($("dashboard-error"), error.message);
+      if (error.status === 401 || error.status === 403) logout(friendlyError(error));
+      else showError($("dashboard-error"), friendlyError(error));
     }
   }
 
@@ -93,7 +100,7 @@
     if (!selectedSession) return;
     $("connect-session").disabled = true;
     try { await request(`/api/v1/sessions/${encodeURIComponent(selectedSession)}/connect`, { method: "POST" }); await refreshQr(); }
-    catch (error) { showError($("dashboard-error"), error.message); $("connect-session").disabled = false; }
+    catch (error) { showError($("dashboard-error"), friendlyError(error)); $("connect-session").disabled = false; }
   }
 
   function logout(message = "") {
@@ -103,10 +110,14 @@
 
   $("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const submit = $("login-submit");
     apiKey = $("api-key").value.trim(); applicationId = $("application-id").value.trim();
+    submit.disabled = true; submit.textContent = "Autenticando…";
     try { await request("/admin/api/auth"); setHidden($("login-view"), true); setHidden($("dashboard-view"), false); showError($("login-error"), ""); await refreshDashboard(); }
-    catch (error) { apiKey = ""; showError($("login-error"), error.status === 403 ? "A API Key não possui permissão administrativa." : "API Key inválida ou Gateway indisponível."); }
+    catch (error) { apiKey = ""; showError($("login-error"), friendlyError(error)); }
+    finally { submit.disabled = false; submit.textContent = "Entrar"; }
   });
+  $("toggle-key").addEventListener("click", () => { const input = $("api-key"); const visible = input.type === "text"; input.type = visible ? "password" : "text"; $("toggle-key").textContent = visible ? "Mostrar" : "Ocultar"; $("toggle-key").setAttribute("aria-label", visible ? "Mostrar API Key" : "Ocultar API Key"); });
   $("logout").addEventListener("click", () => logout());
   $("refresh-sessions").addEventListener("click", refreshDashboard);
   $("refresh-qr").addEventListener("click", refreshQr);

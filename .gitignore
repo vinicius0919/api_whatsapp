@@ -7,3 +7,4 @@ cache.json
 /auth-sessions
 /.session-locks
 /config/api-keys.json
+/config/*.key

@@ -14,10 +14,11 @@
         <p class="muted">Informe uma API Key administrativa. Ela permanecerá somente na memória desta página.</p>
         <form id="login-form" autocomplete="off">
           <label for="api-key">API Key administrativa</label>
-          <input id="api-key" type="password" autocomplete="off" required>
+          <div class="secret-field"><input id="api-key" type="password" autocomplete="off" required><button id="toggle-key" class="secondary" type="button" aria-label="Mostrar API Key">Mostrar</button></div>
           <label for="application-id">Application ID</label>
-          <input id="application-id" type="text" value="default" autocomplete="off" required>
-          <button type="submit">Entrar</button>
+          <input id="application-id" type="text" placeholder="Opcional; default para chave ampla" autocomplete="off">
+          <p class="field-help">Opcional. Quando a API Key administrativa pertence a uma única aplicação, o Gateway identifica o Application ID automaticamente.</p>
+          <button id="login-submit" type="submit">Entrar</button>
         </form>
         <p id="login-error" class="error" role="alert" hidden></p>
       </section>

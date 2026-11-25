@@ -14,6 +14,9 @@ form { display: grid; gap: 10px; margin-top: 24px; }
 label { font-size: .88rem; font-weight: 700; }
 input { border: 1px solid #bdcec4; border-radius: 10px; font: inherit; padding: 12px 13px; width: 100%; }
 input:focus { border-color: #17834f; outline: 3px solid rgba(23, 131, 79, .14); }
+.secret-field { display: flex; gap: 8px; }
+.secret-field input { min-width: 0; }
+.field-help { color: #64766d; font-size: .82rem; line-height: 1.45; margin: -2px 0 4px; }
 button { background: #17834f; border: 0; border-radius: 10px; color: #fff; cursor: pointer; font: inherit; font-weight: 750; padding: 11px 15px; }
 button:hover { background: #106b40; }
 button:disabled { cursor: not-allowed; opacity: .48; }

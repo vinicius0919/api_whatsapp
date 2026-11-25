@@ -88,10 +88,11 @@ function requireApiKey(options = {}) {
     const apiKey = getCredentials(req);
     if (!apiKey) return next(new AppError(401, "API key obrigatória", "AUTH_REQUIRED"));
 
-    const applicationId = req.get("x-application-id") || "default";
+    const requestedApplicationId = req.get("x-application-id");
     const sessionId = req.get("x-whatsapp-session") || req.query.session || config.defaultSession;
     const principal = (await readKeyStore()).find((entry) => entry.enabled !== false && matchesHash(apiKey, entry.keyHash));
     if (!principal) return next(new AppError(401, "API key inválida", "AUTH_INVALID"));
+    const applicationId = requestedApplicationId || (principal.role === "admin" && principal.applications?.length === 1 && principal.applications[0] !== "*" ? principal.applications[0] : "default");
     if (!allows(principal.applications, applicationId)) return next(new AppError(403, "Aplicação não autorizada", "APP_FORBIDDEN"));
     if (!allows(principal.sessions, sessionId)) return next(new AppError(403, "Sessão não autorizada", "SESSION_FORBIDDEN"));
     if (options.admin && principal.role !== "admin") return next(new AppError(403, "Acesso administrativo necessário", "ADMIN_FORBIDDEN"));
