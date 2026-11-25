@@ -12,8 +12,8 @@ router.post("/", asyncRoute(async (req, res) => {
 router.get("/", asyncRoute(async (req, res) => res.json(await listSubscriptions(req.auth.applicationId))));
 
 router.patch("/:id", asyncRoute(async (req, res) => {
-  const { url, events, secret } = req.body || {};
-  res.json(await updateSubscription(req.auth.applicationId, req.params.id, { url, events, secret }));
+  const { url, events, chatIds, secret } = req.body || {};
+  res.json(await updateSubscription(req.auth.applicationId, req.params.id, { url, events, chatIds, secret }));
 }));
 
 router.delete("/:id", asyncRoute(async (req, res) => {

@@ -86,7 +86,7 @@ O backend deve usar sua própria conexão Atlas e receber a URL pública HTTPS d
 - `WHATSAPP_APPROVAL_GROUP_ID` com o JID exato do grupo autorizado.
 - `WHATSAPP_REQUEST_TIMEOUT_MS` com limite explícito.
 
-Cadastre o webhook somente depois que o backend estiver disponível via HTTPS. A assinatura HMAC deve ser validada sobre o corpo bruto, junto com timestamp, `eventId`, aplicação, sessão e grupo.
+Cadastre o webhook somente depois que o backend estiver disponível via HTTPS. A assinatura HMAC deve ser validada sobre o corpo bruto, junto com timestamp, `eventId`, aplicação, sessão e grupo. Para uma sessão compartilhada, informe `chatIds` na subscription (por exemplo, `120363432779760997@g.us`); o Gateway entrega somente a aplicações habilitadas para a sessão e somente aos chats inscritos.
 
 O comando de inicialização é `npm start`. Mantenha `WHATSAPP_ENABLED=false` no primeiro deploy. O backend deve usar sua porta Railway, a URI Atlas produtiva existente e seus segredos próprios; não reutilize a URI do Gateway.
 

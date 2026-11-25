@@ -112,4 +112,11 @@ function requireSessionAccess(req, sessionId) {
   }
 }
 
-module.exports = { hashApiKey, matchesHash, requireApiKey, requireSessionAccess, readKeyStore, mergeKeyStores };
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (req.auth?.role === "admin" || allows(req.auth?.permissions, permission)) return next();
+    return next(new AppError(403, "Permissão insuficiente", "PERMISSION_FORBIDDEN"));
+  };
+}
+
+module.exports = { hashApiKey, matchesHash, requireApiKey, requirePermission, requireSessionAccess, readKeyStore, mergeKeyStores };

@@ -98,6 +98,8 @@ X-Webhook-Signature: sha256=<HMAC_SHA256(timestamp.eventId.rawBody)>
 
 A entrega é pelo menos uma vez, com retry persistente, limite de tentativas e possível fora de ordem.
 
+Uma subscription pode restringir a entrega a chats específicos usando `chatIds`, por exemplo `['120363432779760997@g.us']`. Para uma sessão compartilhada, o dispatcher considera a aplicação proprietária e as aplicações habilitadas que possuem a sessão em `allowedSessionIds`; em seguida aplica o evento e o filtro `chatIds`. Assim, compartilhar a sessão não concede acesso automático a outras aplicações. Para integrações de grupo, sempre cadastre `chatIds` explicitamente.
+
 Exemplo:
 
 ```bash

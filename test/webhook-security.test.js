@@ -33,3 +33,13 @@ test("aceita somente o destino local direto configurado", async () => {
   await assert.rejects(() => validateWebhookUrl("http://127.0.0.1:3000/webhook", { allowLocalTest: true }), /HTTPS/);
   await assert.rejects(() => validateWebhookUrl("http://127.0.0.1:3001/webhooks/whatsapp", { allowLocalTest: true }), /HTTPS/);
 });
+
+test("restringe subscriptions de mensagens à allowlist do Gateway", () => {
+  const cwd = path.resolve(__dirname, "..");
+  const script = "const { validateChatScope } = require('./src/services/webhookService'); try { validateChatScope(JSON.parse(process.argv[1]), ['message.received']); process.stdout.write('ok'); } catch (error) { process.stdout.write(error.code); }";
+  const env = { ...process.env, NODE_ENV: "test", WHATSAPP_MONITOR_MODE: "allowlist", WHATSAPP_MONITORED_GROUPS: "120363432779760997@g.us" };
+  const allowed = execFileSync(process.execPath, ["-e", script, JSON.stringify(["120363432779760997@g.us"])], { cwd, env, encoding: "utf8" });
+  const denied = execFileSync(process.execPath, ["-e", script, JSON.stringify(["999999@g.us"])], { cwd, env, encoding: "utf8" });
+  assert.equal(allowed.trim().split("\n").at(-1), "ok");
+  assert.equal(denied.trim().split("\n").at(-1), "WEBHOOK_CHAT_NOT_ALLOWED");
+});

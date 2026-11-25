@@ -201,4 +201,28 @@ if (!process.env.TEST_MONGODB_URI) {
     assert.equal(delivery.status, "delivered");
     assert.equal(delivery.attempts, 1);
   });
+
+  test("encaminha sessão compartilhada somente para aplicações autorizadas e chats inscritos", async () => {
+    const groupId = "120363432779760997@g.us";
+    await Application.create([
+      { id: "req-services", name: "Req Services", role: "application", allowedSessionIds: ["default"], permissions: ["webhooks:manage"] },
+      { id: "other-app", name: "Other", role: "application", allowedSessionIds: ["default"], permissions: ["webhooks:manage"] },
+    ]);
+    await Session.create({ id: "default", name: "Default", ownerApplicationId: "default", authStoragePath: path.join(process.env.WHATSAPP_AUTH_DIR, "default") });
+    const reqSubscription = await WebhookSubscription.create({ id: "sub-req", applicationId: "req-services", url: "https://webhook.example.test/req", events: ["message.received"], chatIds: [groupId], secretCiphertext: encryptSecret("req-secret") });
+    const otherSubscription = await WebhookSubscription.create({ id: "sub-other", applicationId: "other-app", url: "https://webhook.example.test/other", events: ["message.received"], chatIds: ["999999@g.us"], secretCiphertext: encryptSecret("other-secret") });
+    const unscopedSubscription = await WebhookSubscription.create({ id: "sub-unscoped", applicationId: "other-app", url: "https://webhook.example.test/unscoped", events: ["message.received"], secretCiphertext: encryptSecret("unscoped-secret") });
+    let deliveredBody;
+    const dispatcher = new WebhookDispatcher({ fetchImpl: async (_url, options) => { deliveredBody = JSON.parse(options.body); return { ok: true, status: 200 }; }, validateUrl: async () => {} });
+
+    await dispatcher.enqueue({ eventId: "evt-shared-group", type: "message.received", sessionId: "default", timestamp: new Date().toISOString(), data: { chatId: groupId } });
+    assert.equal((await WebhookDelivery.findOne({ eventId: "evt-shared-group", subscriptionId: reqSubscription.id })).status, "delivered");
+    assert.equal(await WebhookDelivery.countDocuments({ eventId: "evt-shared-group", subscriptionId: otherSubscription.id }), 0);
+    assert.equal(await WebhookDelivery.countDocuments({ eventId: "evt-shared-group", subscriptionId: unscopedSubscription.id }), 0);
+    assert.equal(deliveredBody.applicationId, "req-services");
+
+    await dispatcher.enqueue({ eventId: "evt-shared-other-chat", type: "message.received", sessionId: "default", timestamp: new Date().toISOString(), data: { chatId: "999999@g.us" } });
+    assert.equal(await WebhookDelivery.countDocuments({ eventId: "evt-shared-other-chat", subscriptionId: reqSubscription.id }), 0);
+    assert.equal((await WebhookDelivery.findOne({ eventId: "evt-shared-other-chat", subscriptionId: otherSubscription.id })).status, "delivered");
+  });
 }

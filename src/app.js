@@ -3,7 +3,7 @@ const path = require("node:path");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const config = require("./config");
-const { requireApiKey } = require("./auth");
+const { requireApiKey, requirePermission } = require("./auth");
 const { asyncRoute, errorHandler } = require("./middleware");
 
 const messageRoutes = require("../routes/messages");
@@ -50,7 +50,7 @@ app.use("/api/v1/sessions", adminRateLimit, (req, res, next) => {
   next();
 }, requireApiKey(), v1SessionRoutes);
 app.use("/api/v1/messages", requireApiKey(), v1MessageRoutes);
-app.use("/api/v1/webhooks", requireApiKey(), v1WebhookRoutes);
+app.use("/api/v1/webhooks", requireApiKey(), requirePermission("webhooks:manage"), v1WebhookRoutes);
 
 
 app.get("/health", (req, res) => {

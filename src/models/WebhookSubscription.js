@@ -6,6 +6,7 @@ const schema = new mongoose.Schema({
   url: { type: String, required: true },
   enabled: { type: Boolean, default: true, index: true },
   events: { type: [String], default: [] },
+  chatIds: { type: [String], default: [] },
   secretCiphertext: { type: String, required: true },
 }, { timestamps: true, versionKey: false });
 
