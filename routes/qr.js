@@ -5,6 +5,7 @@ const router = express.Router();
 const { getLastQr, getSessionStatus } = require("../src/whatsapp");
 
 router.get("/", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   const sessionId = req.auth.sessionId;
   const qr = getLastQr(sessionId);
   if (!qr) {

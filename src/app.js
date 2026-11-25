@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("node:path");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const config = require("./config");
@@ -14,10 +15,28 @@ const v1WebhookRoutes = require("../routes/v1/webhooks");
 
 const app = express();
 
+const adminRateLimit = rateLimit({ windowMs: config.rateLimitWindowMs, limit: 30, standardHeaders: "draft-7", legacyHeaders: false });
+const adminHeaders = (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+  next();
+};
+
 const allowedOrigins = config.corsOrigin.split(",").map((origin) => origin.trim()).filter(Boolean);
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)) }));
 app.use(express.json({ limit: "64kb" }));
 app.use(rateLimit({ windowMs: config.rateLimitWindowMs, limit: config.rateLimitMax, standardHeaders: "draft-7", legacyHeaders: false }));
+
+const adminPublicPath = path.join(__dirname, "../public/admin");
+app.get("/admin", adminHeaders, (req, res) => res.sendFile(path.join(adminPublicPath, "index.html")));
+app.use("/admin", adminHeaders, express.static(adminPublicPath, { index: "index.html", dotfiles: "deny", etag: false, maxAge: 0 }));
+
+app.get("/admin/api/auth", adminRateLimit, (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+}, requireApiKey({ admin: true }), (req, res) => {
+  res.json({ authenticated: true });
+});
 
 app.use("/messages", requireApiKey(), messageRoutes);
 
@@ -25,7 +44,10 @@ app.use("/groups", requireApiKey(), groupRoutes);
 
 app.use("/qr", requireApiKey({ admin: true }), qrroutes);
 
-app.use("/api/v1/sessions", requireApiKey(), v1SessionRoutes);
+app.use("/api/v1/sessions", adminRateLimit, (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+}, requireApiKey(), v1SessionRoutes);
 app.use("/api/v1/messages", requireApiKey(), v1MessageRoutes);
 app.use("/api/v1/webhooks", requireApiKey(), v1WebhookRoutes);
 

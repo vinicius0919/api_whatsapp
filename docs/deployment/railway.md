@@ -16,6 +16,8 @@ Os quatro repositórios permanecem independentes. O Railway pode usar os buildpa
 
 ## Gateway WhatsApp
 
+O painel administrativo fica no mesmo serviço, em `/admin`. Ele autentica a API key exclusivamente em memória e consulta `/admin/api/auth`, `/health`, `/ready`, `/api/v1/sessions` e `/api/v1/sessions/:id/qr` com cabeçalhos. A chave não é armazenada no navegador. O painel não cria sessões, não faz logout remoto e não envia mensagens.
+
 Configure `PORT` usando a variável fornecida pelo Railway e faça o processo escutar em `0.0.0.0`. O processo abre o listener HTTP antes de tentar MongoDB ou WhatsApp: `GET /health` retorna `200` enquanto o processo está vivo, mesmo durante falha de Atlas, QR Code ou reconexão; `GET /ready` retorna `503` até MongoDB e sessão estarem operacionais. Configure o healthcheck do Railway para `/health`, nunca `/ready`, porque a ausência temporária de autenticação WhatsApp não deve impedir o deploy do processo HTTP.
 
 Variáveis principais:
@@ -39,6 +41,7 @@ Use um volume persistente montado em `/data` e configure `WHATSAPP_AUTH_DIR=/dat
 APPLICATION_ID=req-services \
 APPLICATION_NAME=req-services \
 APPLICATION_API_KEY='<chave-fornecida-pelo-secret-manager>' \
+APPLICATION_ROLE=application \
 APPLICATION_SESSIONS=default \
 APPLICATION_PERMISSIONS=messages:send,webhooks:manage \
 npm run provision-application -- --dry-run
@@ -46,12 +49,27 @@ npm run provision-application -- --dry-run
 APPLICATION_ID=req-services \
 APPLICATION_NAME=req-services \
 APPLICATION_API_KEY='<chave-fornecida-pelo-secret-manager>' \
+APPLICATION_ROLE=application \
 APPLICATION_SESSIONS=default \
 APPLICATION_PERMISSIONS=messages:send,webhooks:manage \
 npm run provision-application -- --apply
 ```
 
 Execute `--apply` somente após validar que `MONGODB_URI` aponta para o banco Atlas exclusivo do Gateway. A operação é limitada à aplicação identificada, adiciona o hash sem substituir hashes existentes e não cria credenciais automaticamente. Se a aplicação já existir com sessões ou permissões diferentes, o script aborta; use `--allow-scope-change` somente após revisão explícita.
+
+Para uma chave administrativa do painel, use uma chave nova e exclusiva, com escopo explícito das sessões necessárias:
+
+```bash
+APPLICATION_ID=gateway-admin \
+APPLICATION_NAME=gateway-admin \
+APPLICATION_API_KEY='<chave-gerada-no-secret-manager>' \
+APPLICATION_ROLE=admin \
+APPLICATION_SESSIONS=default \
+APPLICATION_PERMISSIONS=sessions:read,sessions:connect \
+npm run provision-application -- --dry-run
+```
+
+Revise o dry-run e execute `--apply` somente no serviço Gateway, com `MONGODB_URI` apontando para o Atlas de produção do Gateway. O comando é idempotente para a mesma chave; não reutilize chaves locais ou de homologação e não coloque o valor em argumentos persistentes, commits ou logs.
 
 ## Backend req-services
 

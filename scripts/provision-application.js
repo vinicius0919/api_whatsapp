@@ -22,19 +22,21 @@ async function main() {
   const id = required("APPLICATION_ID");
   const name = process.env.APPLICATION_NAME?.trim() || id;
   const apiKey = required("APPLICATION_API_KEY");
+  const role = process.env.APPLICATION_ROLE?.trim() || "application";
+  if (!["application", "admin"].includes(role)) throw new Error("APPLICATION_ROLE deve ser application ou admin");
   const allowedSessionIds = list("APPLICATION_SESSIONS", "default");
   const permissions = list("APPLICATION_PERMISSIONS");
-  console.log(JSON.stringify({ mode: apply ? "apply" : "dry-run", applicationId: id, sessions: allowedSessionIds, permissions }));
+  console.log(JSON.stringify({ mode: apply ? "apply" : "dry-run", applicationId: id, role, sessions: allowedSessionIds, permissions }));
   if (!apply) return;
 
   await connectMongo();
   const existing = await Application.findOne({ id }).lean();
-  if (existing && !allowScopeChange && (!sameList(existing.allowedSessionIds, allowedSessionIds) || !sameList(existing.permissions, permissions))) {
+  if (existing && !allowScopeChange && ((existing.role || "application") !== role || !sameList(existing.allowedSessionIds, allowedSessionIds) || !sameList(existing.permissions, permissions))) {
     throw new Error("Aplicação existente possui escopo diferente; use --allow-scope-change após revisão explícita");
   }
   const keyAlreadyProvisioned = (existing?.apiKeyHashes || []).some((encodedHash) => matchesHash(apiKey, encodedHash));
   const update = {
-    $set: { name, enabled: true, allowedSessionIds, permissions },
+    $set: { name, role, enabled: true, allowedSessionIds, permissions },
   };
   if (!keyAlreadyProvisioned) update.$addToSet = { apiKeyHashes: hashApiKey(apiKey) };
   await Application.findOneAndUpdate(

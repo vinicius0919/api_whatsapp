@@ -17,3 +17,11 @@ test("não reativa no JSON uma credencial revogada no MongoDB", () => {
   assert.equal(merged.some((entry) => entry.keyHash === revokedHash), false);
   assert.equal(merged.some((entry) => entry.keyHash === activeHash), true);
 });
+
+test("preserva o papel administrativo provisionado no MongoDB", () => {
+  const { mergeKeyStores } = require("../src/auth");
+  const adminHash = hashApiKey("admin-do-painel");
+  const merged = mergeKeyStores([], [{ id: "gateway-admin", role: "admin", enabled: true, apiKeyHashes: [adminHash], allowedSessionIds: ["default"] }]);
+  assert.equal(merged[0].role, "admin");
+  assert.deepEqual(merged[0].sessions, ["default"]);
+});

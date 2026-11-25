@@ -53,7 +53,7 @@ function mergeKeyStores(keys, applications) {
   });
   const mongoKeys = applications.filter((application) => application.enabled !== false).flatMap((application) => (application.apiKeyHashes || []).map((keyHash) => ({
     id: application.id,
-    role: "application",
+    role: application.role || "application",
     keyHash,
     applications: [application.id],
     sessions: application.allowedSessionIds || [],

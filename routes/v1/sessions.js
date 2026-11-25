@@ -34,6 +34,7 @@ router.post("/:id/connect", asyncRoute(async (req, res) => {
 }));
 
 router.get("/:id/qr", asyncRoute(async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   authorize(req, req.params.id);
   const qr = sessionManager.getSessionQr(req.params.id);
   if (!qr) return res.json(sessionManager.getSessionStatus(req.params.id));

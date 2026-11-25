@@ -10,6 +10,7 @@ async function main() {
     await Application.findOneAndUpdate({ id: key.id }, {
       id: key.id,
       name: key.id,
+      role: key.role === "admin" ? "admin" : "application",
       enabled: key.enabled !== false,
       permissions: key.permissions || [],
       allowedSessionIds: key.sessions || [],

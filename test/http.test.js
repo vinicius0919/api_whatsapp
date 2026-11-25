@@ -54,6 +54,16 @@ test("health informa WhatsApp desconectado e conectado", async () => {
   assert.equal((await request(app).get("/ready")).status, 503);
 });
 
+test("painel administrativo é same-origin e exige autenticação administrativa", async () => {
+  const page = await request(app).get("/admin");
+  assert.equal(page.status, 200);
+  assert.match(page.headers["content-security-policy"], /default-src 'self'/);
+  assert.equal(page.headers["cache-control"], "no-store");
+  assert.equal((await request(app).get("/admin/api/auth")).status, 401);
+  assert.equal((await request(app).get("/admin/api/auth").set(auth(keys.app, "billing"))).status, 403);
+  assert.equal((await request(app).get("/admin/api/auth").set(auth(keys.admin, "admin"))).status, 200);
+});
+
 test("rejeita ausência e invalidade de API key", async () => {
   assert.equal((await request(app).get("/groups")).status, 401);
   assert.equal((await request(app).get("/groups").set(auth("wrong"))).status, 401);

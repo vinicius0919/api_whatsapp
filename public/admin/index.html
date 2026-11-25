@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WhatsApp Gateway — Administração</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section id="login-view" class="card login-card">
+        <p class="eyebrow">WhatsApp Gateway</p>
+        <h1>Painel administrativo</h1>
+        <p class="muted">Informe uma API Key administrativa. Ela permanecerá somente na memória desta página.</p>
+        <form id="login-form" autocomplete="off">
+          <label for="api-key">API Key administrativa</label>
+          <input id="api-key" type="password" autocomplete="off" required>
+          <label for="application-id">Application ID</label>
+          <input id="application-id" type="text" value="default" autocomplete="off" required>
+          <button type="submit">Entrar</button>
+        </form>
+        <p id="login-error" class="error" role="alert" hidden></p>
+      </section>
+
+      <section id="dashboard-view" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">WhatsApp Gateway</p>
+            <h1>Administração</h1>
+          </div>
+          <button id="logout" class="secondary" type="button">Sair</button>
+        </header>
+
+        <section class="status-grid" aria-label="Status do serviço">
+          <article class="card status-card"><span>Servidor HTTP</span><strong id="http-status">Consultando…</strong></article>
+          <article class="card status-card"><span>MongoDB</span><strong id="mongo-status">Consultando…</strong></article>
+          <article class="card status-card"><span>Readiness</span><strong id="ready-status">Consultando…</strong></article>
+        </section>
+
+        <section class="content-grid">
+          <article class="card">
+            <div class="section-heading"><div><p class="eyebrow">Sessões</p><h2>Conexões disponíveis</h2></div><button id="refresh-sessions" class="secondary" type="button">Atualizar</button></div>
+            <div id="sessions" class="sessions" aria-live="polite"></div>
+          </article>
+
+          <article class="card qr-card">
+            <p class="eyebrow">Autenticação</p>
+            <h2 id="selected-title">Selecione uma sessão</h2>
+            <p id="qr-status" class="muted">Escolha uma sessão para consultar o QR Code.</p>
+            <div id="qr-container" class="qr-container" hidden><img id="qr-image" alt="QR Code para autenticação do WhatsApp"></div>
+            <div class="actions"><button id="refresh-qr" type="button" disabled>Atualizar QR Code</button><button id="connect-session" class="secondary" type="button" disabled>Solicitar conexão</button></div>
+            <p class="instructions">No celular, abra WhatsApp → Configurações → Aparelhos conectados → Conectar aparelho e escaneie o código.</p>
+          </article>
+        </section>
+        <p id="dashboard-error" class="error" role="alert" hidden></p>
+      </section>
+    </main>
+    <script src="/admin/app.js" defer></script>
+  </body>
+</html>
