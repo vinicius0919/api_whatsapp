@@ -78,7 +78,7 @@ Para o Telegram, use `npm ci` e `npm start` somente no serviço que já possuir 
 
 | Serviço | Obrigatórias | Opcionais / operação | Homologação |
 | --- | --- | --- | --- |
-| Gateway | `MONGODB_URI`, `PORT`, `WEBHOOK_ENCRYPTION_KEY`, API key provisionada no MongoDB | `WHATSAPP_AUTH_DIR`, `WHATSAPP_SESSION_AUTH_ROOT`, `WHATSAPP_SESSION_LOCK_ROOT`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID` | `WEBHOOK_ALLOW_LOCAL_TEST`, `WEBHOOK_TEST_HOST`, `WEBHOOK_TEST_PORT` |
+| Gateway | `MONGODB_URI`, `PORT`, `WEBHOOK_ENCRYPTION_KEY`, API key provisionada no MongoDB | `WHATSAPP_AUTH_DIR`, `WHATSAPP_SESSION_AUTH_ROOT`, `WHATSAPP_SESSION_LOCK_ROOT`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID` | `WEBHOOK_ALLOW_LOCAL_TEST`, `WEBHOOK_LOCAL_TEST_HOST`, `WEBHOOK_LOCAL_TEST_PORT`, `WEBHOOK_LOCAL_TEST_PATH` |
 | Backend | `MONGO_URI`, `JWT_SECRET`, `INTERNAL_TOKEN`, `PORT` | `CORS_ORIGIN`, Telegram, `WHATSAPP_*` | `TEST_MONGODB_URI`, porta 3005 e `.env.homologation` |
 | Frontend | `VITE_API_URL` | nenhuma credencial de serviço | URL local ou backend de homologação |
 | Telegram | `BOT_TOKEN`, `BASE_URL`, `INTERNAL_TOKEN`, `CHAT_ID`, `AUTHORIZED_USERS`, `PORT` | `NODE_ENV` | token e porta exclusivos de homologação |

@@ -82,7 +82,15 @@ TEST_MONGODB_URI='mongodb://127.0.0.1:27017/api_whatsapp_test' \
 WEBHOOK_TEST_SECRET='segredo-ficticio-com-mais-de-16' npm run webhook:test
 ```
 
-O fluxo cria e remove apenas seus documentos temporários, publica evento sintético e valida HMAC, entrega, deduplicação e assinatura inválida. `WEBHOOK_ALLOW_LOCAL_TEST=true` permite apenas `http://127.0.0.1:<WEBHOOK_TEST_PORT>/webhook` fora de produção; o padrão bloqueia destinos HTTP locais.
+O fluxo cria e remove apenas seus documentos temporários, publica evento sintético e valida HMAC, entrega, deduplicação e assinatura inválida. `WEBHOOK_ALLOW_LOCAL_TEST=true` permite apenas o endereço definido por `WEBHOOK_LOCAL_TEST_HOST`, `WEBHOOK_LOCAL_TEST_PORT` e `WEBHOOK_LOCAL_TEST_PATH` fora de produção; o padrão bloqueia destinos HTTP locais.
+
+Após reiniciar o Gateway com essa configuração, atualize a subscription local existente sem criar outra:
+
+```bash
+npm run webhook:update-local
+```
+
+O comando usa a API autenticada, exige exatamente uma subscription ativa de `message.received` para `default` e preserva o identificador e os eventos pendentes.
 
 ## Railway
 

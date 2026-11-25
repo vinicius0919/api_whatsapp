@@ -22,9 +22,14 @@ test("bloque destinos de webhook inseguros", async () => {
 
 test("permite somente o receptor local explicitamente habilitado fora de produção", () => {
   const cwd = path.resolve(__dirname, "..");
-  const script = "const { validateWebhookUrl } = require('./src/webhooks/security'); validateWebhookUrl('http://127.0.0.1:3004/webhook', { allowLocalTest: true }).then(() => process.stdout.write('ok')).catch((error) => process.stdout.write(error.code));";
-  const enabled = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "test", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_TEST_PORT: "3004" }, encoding: "utf8" });
+  const script = "const { validateWebhookUrl } = require('./src/webhooks/security'); validateWebhookUrl('http://127.0.0.1:3000/webhooks/whatsapp', { allowLocalTest: true }).then(() => process.stdout.write('ok')).catch((error) => process.stdout.write(error.code));";
+  const enabled = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "test", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_LOCAL_TEST_HOST: "127.0.0.1", WEBHOOK_LOCAL_TEST_PORT: "3000", WEBHOOK_LOCAL_TEST_PATH: "/webhooks/whatsapp" }, encoding: "utf8" });
   assert.equal(enabled.trim().split("\n").at(-1), "ok");
-  const production = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "production", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_TEST_PORT: "3004" }, encoding: "utf8" });
+  const production = execFileSync(process.execPath, ["-e", script], { cwd, env: { ...process.env, NODE_ENV: "production", WEBHOOK_ALLOW_LOCAL_TEST: "true", WEBHOOK_LOCAL_TEST_HOST: "127.0.0.1", WEBHOOK_LOCAL_TEST_PORT: "3000", WEBHOOK_LOCAL_TEST_PATH: "/webhooks/whatsapp" }, encoding: "utf8" });
   assert.match(production.trim().split("\n").at(-1), /WEBHOOK_HTTPS_REQUIRED|WEBHOOK_DESTINATION_BLOCKED/);
+});
+
+test("aceita somente o destino local direto configurado", async () => {
+  await assert.rejects(() => validateWebhookUrl("http://127.0.0.1:3000/webhook", { allowLocalTest: true }), /HTTPS/);
+  await assert.rejects(() => validateWebhookUrl("http://127.0.0.1:3001/webhooks/whatsapp", { allowLocalTest: true }), /HTTPS/);
 });

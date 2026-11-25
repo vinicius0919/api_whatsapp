@@ -34,9 +34,9 @@ function isPrivateAddress(address) {
 
 function isAllowedLocalTestUrl(url) {
   return url.protocol === "http:"
-    && url.hostname === "127.0.0.1"
-    && Number(url.port || 80) === config.webhookTestPort
-    && url.pathname === "/webhook"
+    && url.hostname === config.webhookLocalTestHost
+    && Number(url.port || 80) === config.webhookLocalTestPort
+    && url.pathname === config.webhookLocalTestPath
     && !url.username
     && !url.password
     && !url.search

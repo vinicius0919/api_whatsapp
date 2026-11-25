@@ -1,6 +1,6 @@
 const express = require("express");
 const { asyncRoute } = require("../../src/middleware");
-const { createSubscription, listSubscriptions, deleteSubscription } = require("../../src/services/webhookService");
+const { createSubscription, listSubscriptions, updateSubscription, deleteSubscription } = require("../../src/services/webhookService");
 
 const router = express.Router();
 
@@ -10,6 +10,11 @@ router.post("/", asyncRoute(async (req, res) => {
 }));
 
 router.get("/", asyncRoute(async (req, res) => res.json(await listSubscriptions(req.auth.applicationId))));
+
+router.patch("/:id", asyncRoute(async (req, res) => {
+  const { url, events, secret } = req.body || {};
+  res.json(await updateSubscription(req.auth.applicationId, req.params.id, { url, events, secret }));
+}));
 
 router.delete("/:id", asyncRoute(async (req, res) => {
   await deleteSubscription(req.auth.applicationId, req.params.id);

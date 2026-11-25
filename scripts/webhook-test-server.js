@@ -1,14 +1,13 @@
 const http = require("node:http");
 const crypto = require("node:crypto");
-const config = require("../src/config");
 const { signPayload, safeEqual } = require("../src/webhooks/security");
 
 const DEFAULT_TOLERANCE_MS = 5 * 60 * 1000;
 
 function createWebhookTestServer({
   secret = process.env.WEBHOOK_TEST_SECRET || "webhook-test-secret-123456",
-  host = process.env.WEBHOOK_TEST_HOST || config.webhookTestHost,
-  port = Number(process.env.WEBHOOK_TEST_PORT || config.webhookTestPort),
+  host = process.env.WEBHOOK_TEST_RECEIVER_HOST || "127.0.0.1",
+  port = Number(process.env.WEBHOOK_TEST_RECEIVER_PORT || 3104),
   toleranceMs = Number(process.env.WEBHOOK_TEST_TIMESTAMP_TOLERANCE_MS || DEFAULT_TOLERANCE_MS),
 } = {}) {
   const received = [];

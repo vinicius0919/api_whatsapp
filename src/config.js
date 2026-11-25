@@ -58,6 +58,7 @@ const config = Object.freeze({
   monitorMode: monitorMode(process.env.WHATSAPP_MONITOR_MODE),
   monitoredGroups: monitorGroups(process.env.WHATSAPP_MONITORED_GROUPS),
   debugInbound: booleanFlag(process.env.WHATSAPP_DEBUG_INBOUND),
+  interactiveEnabled: process.env.NODE_ENV !== "production" && booleanFlag(process.env.WHATSAPP_INTERACTIVE_ENABLED),
   authDir: path.resolve(rootDir, process.env.WHATSAPP_AUTH_DIR || "auth"),
   sessionAuthRoot: path.resolve(rootDir, process.env.WHATSAPP_SESSION_AUTH_ROOT || "auth-sessions"),
   sessionLockRoot: path.resolve(rootDir, process.env.WHATSAPP_SESSION_LOCK_ROOT || ".session-locks"),
@@ -73,8 +74,9 @@ const config = Object.freeze({
   sessionIdPattern: /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/,
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
   webhookAllowLocalTest: process.env.NODE_ENV !== "production" && booleanFlag(process.env.WEBHOOK_ALLOW_LOCAL_TEST),
-  webhookTestHost: process.env.WEBHOOK_TEST_HOST || "127.0.0.1",
-  webhookTestPort: positiveInteger("WEBHOOK_TEST_PORT", 3004),
+  webhookLocalTestHost: process.env.WEBHOOK_LOCAL_TEST_HOST || "127.0.0.1",
+  webhookLocalTestPort: positiveInteger("WEBHOOK_LOCAL_TEST_PORT", 3000),
+  webhookLocalTestPath: process.env.WEBHOOK_LOCAL_TEST_PATH || "/webhooks/whatsapp",
 });
 
 module.exports = config;

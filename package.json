@@ -11,6 +11,7 @@
     "migrate-api-keys": "node scripts/migrate-api-keys-to-mongo.js",
     "migrate-message-indexes": "node scripts/migrate-message-indexes.js",
     "initialize-indexes": "node scripts/initialize-indexes.js",
+    "webhook:update-local": "node scripts/update-local-webhook.js",
     "webhook:test-server": "node scripts/webhook-test-server.js",
     "webhook:test": "node scripts/webhook-flow.js",
     "test": "node --test"

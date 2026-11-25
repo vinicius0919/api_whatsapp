@@ -45,7 +45,7 @@ async function run() {
     await receiver.listen();
     await Application.create({ id: applicationId, name: "Webhook test", allowedSessionIds: [sessionId] });
     await Session.create({ id: sessionId, name: "Webhook test", ownerApplicationId: applicationId, authStoragePath: `/tmp/${sessionId}` });
-    subscription = await createSubscription({ applicationId, url: `http://127.0.0.1:${process.env.WEBHOOK_TEST_PORT || 3004}/webhook`, events: ["message.received"], secret: process.env.WEBHOOK_TEST_SECRET });
+    subscription = await createSubscription({ applicationId, url: `http://127.0.0.1:${process.env.WEBHOOK_TEST_RECEIVER_PORT || 3104}/webhook`, events: ["message.received"], secret: process.env.WEBHOOK_TEST_SECRET });
     dispatcher.start();
     const event = await eventDispatcher.publish({ eventId, type: "message.received", sessionId, data: { sessionId, messageId: "message-test-1", chatId: "120363432779760997@g.us", senderJid: "5511999999999@s.whatsapp.net", isGroup: true, fromMe: false, forwarded: false, text: "evento de teste", quotedMessage: { messageId: "pedido-1", chatId: "120363432779760997@g.us", participantJid: "5511888888888@s.whatsapp.net", text: "pedido" } } });
     await waitFor(async () => receiver.received.some((item) => item.eventId === eventId), 5000, async () => {
