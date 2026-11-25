@@ -13,6 +13,8 @@ const { normalizeMessage } = require("./messages/normalize");
 const { shouldMonitorMessage } = require("./messages/monitor");
 const { inboundDebug, safeErrorSummary } = require("./messages/debug");
 
+const activeLockPaths = new Set();
+
 function isMessageIdentityDuplicateError(error) {
   const keyPattern = error?.keyPattern || {};
   const indexName = typeof error?.index === "string" ? error.index : "";
@@ -43,31 +45,40 @@ class SessionManager {
   acquireLock(session) {
     fs.mkdirSync(config.sessionLockRoot, { recursive: true });
     const lockPath = this.lockPath(session.id);
+    if (activeLockPaths.has(lockPath)) {
+      throw new AppError(409, "Sessão já está sendo usada por outro processo", "SESSION_LOCKED");
+    }
     try {
       session.lockFd = fs.openSync(lockPath, "wx");
       fs.writeFileSync(session.lockFd, String(process.pid));
+      activeLockPaths.add(lockPath);
       return;
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
     }
     let ownerPid = 0;
     try { ownerPid = Number(fs.readFileSync(lockPath, "utf8")); } catch {}
-    try {
-      if (ownerPid > 0) process.kill(ownerPid, 0);
-      throw new AppError(409, "Sessão já está sendo usada por outro processo", "SESSION_LOCKED");
-    } catch (error) {
-      if (error instanceof AppError) throw error;
-      fs.rmSync(lockPath, { force: true });
-      session.lockFd = fs.openSync(lockPath, "wx");
-      fs.writeFileSync(session.lockFd, String(process.pid));
+    let lockActive = activeLockPaths.has(lockPath);
+    if (!lockActive && ownerPid > 0 && ownerPid !== process.pid) {
+      try {
+        process.kill(ownerPid, 0);
+        lockActive = true;
+      } catch {}
     }
+    if (lockActive) throw new AppError(409, "Sessão já está sendo usada por outro processo", "SESSION_LOCKED");
+    fs.rmSync(lockPath, { force: true });
+    session.lockFd = fs.openSync(lockPath, "wx");
+    fs.writeFileSync(session.lockFd, String(process.pid));
+    activeLockPaths.add(lockPath);
   }
 
   releaseLock(session) {
     if (session.lockFd === undefined) return;
     try { fs.closeSync(session.lockFd); } catch {}
     session.lockFd = undefined;
-    fs.rmSync(this.lockPath(session.id), { force: true });
+    const lockPath = this.lockPath(session.id);
+    activeLockPaths.delete(lockPath);
+    fs.rmSync(lockPath, { force: true });
   }
 
   entry(id) {
