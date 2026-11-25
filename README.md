@@ -122,6 +122,7 @@ Os testes cobrem autenticação, contratos legados e versionados, autorização 
 - Nunca versione `.env`, `config/api-keys.json` ou qualquer diretório `auth/`.
 - Restrinja `CORS_ORIGIN` aos frontends autorizados.
 - Use HTTPS e um proxy reverso em ambientes compartilhados.
+- Configure `TRUST_PROXY=0` em acesso local direto. No Railway, use `TRUST_PROXY=1`, pois há um único proxy reverso confiável na frente do processo. O valor é validado e outros formatos são rejeitados; não use `true` nem confie em múltiplos saltos sem revisar a topologia.
 - O endpoint `/health` é liveness e retorna HTTP `200` enquanto o processo está ativo; `/ready` retorna `503` até MongoDB e sessão WhatsApp estarem prontos.
 - `npm run migrate-api-keys` é uma migração explícita e não destrutiva dos hashes do JSON para `Application`; ela não remove o JSON nem invalida credenciais.
 - Em produção, prefira provisionar aplicações e hashes no MongoDB com `npm run provision-application -- --apply`; o arquivo `config/api-keys.json` é somente fallback local e não deve ser versionado.

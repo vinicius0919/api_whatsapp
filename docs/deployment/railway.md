@@ -20,10 +20,13 @@ O painel administrativo fica no mesmo serviço, em `/admin`. Ele autentica a API
 
 Configure `PORT` usando a variável fornecida pelo Railway e faça o processo escutar em `0.0.0.0`. O processo abre o listener HTTP antes de tentar MongoDB ou WhatsApp: `GET /health` retorna `200` enquanto o processo está vivo, mesmo durante falha de Atlas, QR Code ou reconexão; `GET /ready` retorna `503` até MongoDB e sessão estarem operacionais. Configure o healthcheck do Railway para `/health`, nunca `/ready`, porque a ausência temporária de autenticação WhatsApp não deve impedir o deploy do processo HTTP.
 
+Configure `TRUST_PROXY=1` no serviço Railway. O Railway coloca um único proxy reverso público à frente do processo e encaminha `X-Forwarded-For`; o valor numérico faz o Express confiar somente no salto imediatamente anterior. Não use `TRUST_PROXY=true`, `2` ou listas de redes sem revisar a topologia. Para execução local direta, mantenha `TRUST_PROXY=0`, que é o padrão seguro e impede que um cliente falsifique o IP usando `X-Forwarded-For`. O serviço não deve ser exposto por uma segunda camada de proxy sem reavaliar essa configuração.
+
 Variáveis principais:
 
 - `MONGODB_URI`: banco Atlas exclusivo do Gateway.
 - `PORT`: fornecida pelo Railway.
+- `TRUST_PROXY=1`: um único proxy reverso confiável do Railway; obrigatório para que o `req.ip` usado pelo rate limiting represente o cliente original.
 - `NODE_ENV=production`: ativa validações de produção e impede exceções locais de SSRF.
 - `WEBHOOK_ENCRYPTION_KEY`: obrigatória em produção e usada para cifrar os segredos das subscriptions.
 - `WHATSAPP_AUTH_DIR`: diretório persistente das credenciais da sessão legada.
@@ -97,7 +100,7 @@ Para o Telegram, use `npm ci` e `npm start` somente no serviço que já possuir 
 
 | Serviço | Obrigatórias | Opcionais / operação | Homologação |
 | --- | --- | --- | --- |
-| Gateway | `NODE_ENV=production`, `MONGODB_URI`, `WEBHOOK_ENCRYPTION_KEY`, API key provisionada no MongoDB; `PORT` é injetada pelo Railway | `WHATSAPP_AUTH_DIR=/data/auth`, `WHATSAPP_SESSION_AUTH_ROOT=/data/auth-sessions`, `WHATSAPP_SESSION_LOCK_ROOT=/data/.session-locks`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID`, `WHATSAPP_AUTO_CONNECT` | `WEBHOOK_ALLOW_LOCAL_TEST` deve ser ausente/false; não usar `WEBHOOK_LOCAL_TEST_*` |
+| Gateway | `NODE_ENV=production`, `MONGODB_URI`, `WEBHOOK_ENCRYPTION_KEY`, `TRUST_PROXY=1`, API key provisionada no MongoDB; `PORT` é injetada pelo Railway | `WHATSAPP_AUTH_DIR=/data/auth`, `WHATSAPP_SESSION_AUTH_ROOT=/data/auth-sessions`, `WHATSAPP_SESSION_LOCK_ROOT=/data/.session-locks`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID`, `WHATSAPP_AUTO_CONNECT` | `WEBHOOK_ALLOW_LOCAL_TEST` deve ser ausente/false; não usar `WEBHOOK_LOCAL_TEST_*` |
 | Backend | `MONGO_URI`, `JWT_SECRET`, `INTERNAL_TOKEN`, `PORT` | `CORS_ORIGIN`, Telegram, `WHATSAPP_*` | `TEST_MONGODB_URI`, porta 3005 e `.env.homologation` |
 | Frontend | `VITE_API_URL` | nenhuma credencial de serviço | URL local ou backend de homologação |
 | Telegram | `BOT_TOKEN`, `BASE_URL`, `INTERNAL_TOKEN`, `CHAT_ID`, `AUTHORIZED_USERS`, `PORT` | `NODE_ENV` | token e porta exclusivos de homologação |

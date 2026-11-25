@@ -47,6 +47,14 @@ function booleanFlag(value) {
   return String(value || "false").trim().toLowerCase() === "true";
 }
 
+function parseTrustProxy(value) {
+  const normalized = String(value ?? "0").trim();
+  if (normalized !== "0" && normalized !== "1") {
+    throw new Error("Variável TRUST_PROXY deve ser 0 ou 1");
+  }
+  return Number(normalized);
+}
+
 const rootDir = path.resolve(__dirname, "..");
 const isProduction = (process.env.NODE_ENV || "development") === "production";
 
@@ -73,6 +81,7 @@ const config = Object.freeze({
   rateLimitWindowMs: positiveInteger("RATE_LIMIT_WINDOW_MS", 15 * 60 * 1000),
   rateLimitMax: positiveInteger("RATE_LIMIT_MAX", 120),
   messageRateLimitMax: positiveInteger("MESSAGE_RATE_LIMIT_MAX", 30),
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   reconnectBaseDelayMs: positiveInteger("RECONNECT_BASE_DELAY_MS", 1000),
   reconnectMaxDelayMs: positiveInteger("RECONNECT_MAX_DELAY_MS", 30000),
   reconnectMaxAttempts: nonNegativeInteger("RECONNECT_MAX_ATTEMPTS", 0),

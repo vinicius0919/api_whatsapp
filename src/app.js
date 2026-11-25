@@ -14,6 +14,7 @@ const v1MessageRoutes = require("../routes/v1/messages");
 const v1WebhookRoutes = require("../routes/v1/webhooks");
 
 const app = express();
+app.set("trust proxy", config.trustProxy);
 
 const adminRateLimit = rateLimit({ windowMs: config.rateLimitWindowMs, limit: 30, standardHeaders: "draft-7", legacyHeaders: false });
 const adminHeaders = (req, res, next) => {
