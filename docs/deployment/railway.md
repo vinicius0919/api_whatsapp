@@ -16,19 +16,20 @@ Os quatro repositórios permanecem independentes. O Railway pode usar os buildpa
 
 ## Gateway WhatsApp
 
-Configure `PORT` usando a variável fornecida pelo Railway e faça o processo escutar em `0.0.0.0`. O liveness check é `GET /health` e retorna `200` enquanto o processo está ativo, mesmo durante QR Code ou reconexão. O readiness check é `GET /ready` e retorna `200` somente quando MongoDB e sessão estão operacionais. Configure o Railway para não reiniciar o container apenas porque a sessão WhatsApp está temporariamente desconectada.
+Configure `PORT` usando a variável fornecida pelo Railway e faça o processo escutar em `0.0.0.0`. O processo abre o listener HTTP antes de tentar MongoDB ou WhatsApp: `GET /health` retorna `200` enquanto o processo está vivo, mesmo durante falha de Atlas, QR Code ou reconexão; `GET /ready` retorna `503` até MongoDB e sessão estarem operacionais. Configure o healthcheck do Railway para `/health`, nunca `/ready`, porque a ausência temporária de autenticação WhatsApp não deve impedir o deploy do processo HTTP.
 
 Variáveis principais:
 
 - `MONGODB_URI`: banco Atlas exclusivo do Gateway.
 - `PORT`: fornecida pelo Railway.
+- `NODE_ENV=production`: ativa validações de produção e impede exceções locais de SSRF.
+- `WEBHOOK_ENCRYPTION_KEY`: obrigatória em produção e usada para cifrar os segredos das subscriptions.
 - `WHATSAPP_AUTH_DIR`: diretório persistente das credenciais da sessão legada.
 - `WHATSAPP_SESSION_AUTH_ROOT`: diretório persistente das demais sessões.
-- `WEBHOOK_ENCRYPTION_KEY`: chave para cifrar segredos dos webhooks.
 - `WHATSAPP_DEFAULT_APPLICATION_ID`: aplicação padrão da sessão legada, normalmente `default`.
 - `WHATSAPP_MONITOR_MODE` e `WHATSAPP_MONITORED_GROUPS`: monitoramento seletivo, quando necessário.
 
-Use um volume persistente montado nos diretórios de autenticação. Não execute duas instâncias utilizando a mesma sessão Baileys. A exceção `WEBHOOK_ALLOW_LOCAL_TEST` deve permanecer desativada ou ausente em produção; o Gateway deve aceitar somente destinos HTTPS válidos.
+Use um volume persistente montado em `/data` e configure `WHATSAPP_AUTH_DIR=/data/auth`, `WHATSAPP_SESSION_AUTH_ROOT=/data/auth-sessions` e `WHATSAPP_SESSION_LOCK_ROOT=/data/.session-locks`. O diretório `API_KEY_STORE` não deve ser a fonte de autenticação de produção: mantenha a aplicação e os hashes na coleção `applications` do MongoDB do Gateway. Não execute duas instâncias utilizando a mesma sessão Baileys. A exceção `WEBHOOK_ALLOW_LOCAL_TEST` deve permanecer desativada ou ausente em produção; o Gateway deve aceitar somente destinos HTTPS válidos.
 
 ### Provisionamento da aplicação
 
@@ -78,7 +79,7 @@ Para o Telegram, use `npm ci` e `npm start` somente no serviço que já possuir 
 
 | Serviço | Obrigatórias | Opcionais / operação | Homologação |
 | --- | --- | --- | --- |
-| Gateway | `MONGODB_URI`, `PORT`, `WEBHOOK_ENCRYPTION_KEY`, API key provisionada no MongoDB | `WHATSAPP_AUTH_DIR`, `WHATSAPP_SESSION_AUTH_ROOT`, `WHATSAPP_SESSION_LOCK_ROOT`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID` | `WEBHOOK_ALLOW_LOCAL_TEST`, `WEBHOOK_LOCAL_TEST_HOST`, `WEBHOOK_LOCAL_TEST_PORT`, `WEBHOOK_LOCAL_TEST_PATH` |
+| Gateway | `NODE_ENV=production`, `MONGODB_URI`, `WEBHOOK_ENCRYPTION_KEY`, API key provisionada no MongoDB; `PORT` é injetada pelo Railway | `WHATSAPP_AUTH_DIR=/data/auth`, `WHATSAPP_SESSION_AUTH_ROOT=/data/auth-sessions`, `WHATSAPP_SESSION_LOCK_ROOT=/data/.session-locks`, `WHATSAPP_MONITOR_MODE`, `WHATSAPP_MONITORED_GROUPS`, `WHATSAPP_DEFAULT_APPLICATION_ID`, `WHATSAPP_AUTO_CONNECT` | `WEBHOOK_ALLOW_LOCAL_TEST` deve ser ausente/false; não usar `WEBHOOK_LOCAL_TEST_*` |
 | Backend | `MONGO_URI`, `JWT_SECRET`, `INTERNAL_TOKEN`, `PORT` | `CORS_ORIGIN`, Telegram, `WHATSAPP_*` | `TEST_MONGODB_URI`, porta 3005 e `.env.homologation` |
 | Frontend | `VITE_API_URL` | nenhuma credencial de serviço | URL local ou backend de homologação |
 | Telegram | `BOT_TOKEN`, `BASE_URL`, `INTERNAL_TOKEN`, `CHAT_ID`, `AUTHORIZED_USERS`, `PORT` | `NODE_ENV` | token e porta exclusivos de homologação |

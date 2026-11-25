@@ -48,6 +48,11 @@ function booleanFlag(value) {
 }
 
 const rootDir = path.resolve(__dirname, "..");
+const isProduction = (process.env.NODE_ENV || "development") === "production";
+
+if (isProduction && !process.env.WEBHOOK_ENCRYPTION_KEY?.trim()) {
+  throw new Error("Variável de ambiente obrigatória ausente: WEBHOOK_ENCRYPTION_KEY");
+}
 
 const config = Object.freeze({
   env: process.env.NODE_ENV || "development",
@@ -63,7 +68,7 @@ const config = Object.freeze({
   sessionAuthRoot: path.resolve(rootDir, process.env.WHATSAPP_SESSION_AUTH_ROOT || "auth-sessions"),
   sessionLockRoot: path.resolve(rootDir, process.env.WHATSAPP_SESSION_LOCK_ROOT || ".session-locks"),
   apiKeyStore: path.resolve(rootDir, process.env.API_KEY_STORE || "config/api-keys.json"),
-  mongoUri: requiredString("MONGODB_URI", "mongodb://127.0.0.1:27017/api_whatsapp"),
+  mongoUri: requiredString("MONGODB_URI", isProduction ? undefined : "mongodb://127.0.0.1:27017/api_whatsapp"),
   mongoServerSelectionTimeoutMs: positiveInteger("MONGODB_SERVER_SELECTION_TIMEOUT_MS", 5000),
   rateLimitWindowMs: positiveInteger("RATE_LIMIT_WINDOW_MS", 15 * 60 * 1000),
   rateLimitMax: positiveInteger("RATE_LIMIT_MAX", 120),
